@@ -1,5 +1,5 @@
 # Experimental and test output files
-experimental/*
+experimental/**
 !experimental/README.md
 
 # Python

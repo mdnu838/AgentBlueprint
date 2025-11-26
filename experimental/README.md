@@ -11,7 +11,7 @@ This folder contains experimental and work-in-progress code that is not ready fo
 ## Guidelines
 
 1. Code here is **not production-ready**
-2. This folder is **git-ignored** to keep the repository clean
+2. Contents of this folder (except README.md) are **git-ignored** to keep the repository clean
 3. Move stable code to appropriate production folders
 4. Document experiments for future reference
 
