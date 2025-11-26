@@ -1,0 +1,62 @@
+[project]
+name = "agentblueprint"
+version = "0.1.0"
+description = "A uv-powered Python toolkit for building multi-agent systems"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "AgentBlueprint Team" }
+]
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.4.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/agentblueprint-core",
+    "packages/agentblueprint-cli",
+    "packages/agentblueprint-tools",
+    "packages/agentblueprint-config",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "packages/*/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=agentblueprint_core --cov=agentblueprint_cli --cov=agentblueprint_tools --cov=agentblueprint_config"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

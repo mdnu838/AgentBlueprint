@@ -1,22 +1,147 @@
 # AgentBlueprint
 
-**AgentBlueprint** is a lightweight, fast, and flexible project scaffolding tool for Python frameworks and AI agents. It focuses on simplicity, essential features, and clean starter templates — without unnecessary complexity.
+**A uv-powered Python toolkit for building multi-agent systems with flexible workflows.**
 
-Terminal command prefix: **`ab`**
+🚀 **Build multi-agent systems in minutes, not hours**
 
----
-
-## 🚀 Overview
-
-AgentBlueprint helps you quickly generate structured, ready-to-run project templates. Whether you're starting a Flask API, a FastAPI service, a Django project, or an AI Agent, AgentBlueprint sets up the folders, configs, and basic code so you can start building immediately.
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 ---
 
-## ✨ Core Features (Simplified)
+## ✨ Key Features
 
-### 🔧 Clean, Minimal Framework Scaffolding
+- 🖥️ **CLI & Config-First**: Use code OR YAML/JSON configs
+- 🧩 **Modular Design**: Mix and match tools, agents, workflows
+- ⚡ **Modern Python**: Built with uv, Pydantic, and type hints
+- 🔧 **Extensible**: Easy to add custom tools and agents
+- 📦 **Mono-Repo**: Clean workspace structure for teams
 
-Generate basic project structures for:
+---
+
+## 🎯 Who Is This For?
+
+✅ **Beginners** - No coding required! Use YAML configs to create agents  
+✅ **Developers** - Code-first API for full control  
+✅ **Teams** - Mono-repo structure with clear separation
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Install via uv
+uv tool install agentblueprint
+
+# Verify
+ab --version
+```
+
+### Create Your First Agent (YAML)
+
+```yaml
+# workflow.yaml
+agents:
+  assistant:
+    model: openai:gpt-4
+    system_prompt: "You are a helpful assistant."
+    tools: []
+
+workflow:
+  type: sequential
+  steps:
+    - agent: assistant
+      input: "{{ user_input }}"
+```
+
+```bash
+ab run workflow.yaml --input "Hello, world!"
+```
+
+### Create Your First Agent (Code)
+
+```python
+from agentblueprint_core import Agent
+
+agent = Agent(
+    name="assistant",
+    model="openai:gpt-4",
+    system_prompt="You are a helpful assistant."
+)
+
+response = agent.run("Hello, world!")
+print(response)
+```
+
+---
+
+## 📚 Documentation
+
+- **[Full Design Doc](README_v2.md)** - Complete architecture and roadmap
+- **[Examples](examples/)** - Code samples and workflows
+- **[Contributing](CONTRIBUTING.md)** - How to contribute
+
+---
+
+## 🏗️ Project Structure
+
+```
+agentblueprint/
+├── packages/
+│   ├── agentblueprint-core/     # Core agent runtime
+│   ├── agentblueprint-cli/      # CLI tool
+│   ├── agentblueprint-tools/    # Pre-built tools
+│   └── agentblueprint-config/   # Config management
+├── examples/                     # Example workflows
+├── tests/                        # Integration tests
+├── experiments/                  # Internal experiments (gitignored)
+└── internal_docs/                # Internal docs (gitignored)
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+```bash
+# Clone and setup
+git clone https://github.com/yourusername/agentblueprint.git
+cd agentblueprint
+uv sync
+
+# Run tests
+uv run pytest
+
+# Format code
+uv run ruff format .
+```
+
+---
+
+## 📄 License
+
+Apache-2.0 - see [LICENSE](LICENSE) for details.
+
+---
+
+## 🌟 Why AgentBlueprint?
+
+| Feature | AgentBlueprint | Others |
+|---------|---------------|--------|
+| **uv-native** | ✅ | ❌ |
+| **Config-first option** | ✅ | Limited |
+| **Mono-repo structure** | ✅ | ❌ |
+| **Beginner-friendly** | ✅ YAML configs | Code-only |
+| **Production-ready** | ✅ | Varies |
+
+---
+
+**Build smarter agents, faster. 🚀**
+
+[Get Started](README_v2.md) | [Examples](examples/) | [Documentation](README_v2.md)
 
 * **FastAPI**
 * **Flask**

@@ -1,0 +1,27 @@
+[project]
+name = "agentblueprint-cli"
+version = "0.1.0"
+description = "CLI tool for AgentBlueprint multi-agent systems"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+
+dependencies = [
+    "agentblueprint-core",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0.0",
+]
+
+[tool.uv.sources]
+agentblueprint-core = { workspace = true }
+
+[project.scripts]
+ab = "agentblueprint_cli.main:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentblueprint_cli"]
