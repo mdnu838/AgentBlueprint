@@ -8,7 +8,10 @@ from rich.panel import Panel
 
 from agentblueprint_config import load_and_parse
 from agentblueprint_core import ToolRegistry
-from agentblueprint_tools import CalculatorTool, EchoTool, PythonREPLTool, HTTPClientTool, WebSearchTool
+from agentblueprint_tools import (
+    CalculatorTool, EchoTool, PythonREPLTool, HTTPClientTool, WebSearchTool,
+    FileReadTool, FileWriteTool, SystemTimeTool, SystemInfoTool
+)
 
 console = Console()
 
@@ -28,6 +31,12 @@ def run(workflow_file, input):
     ToolRegistry.register(PythonREPLTool())
     ToolRegistry.register(HTTPClientTool())
     ToolRegistry.register(WebSearchTool())
+    
+    # New Tools
+    ToolRegistry.register(FileReadTool())
+    ToolRegistry.register(FileWriteTool())
+    ToolRegistry.register(SystemTimeTool())
+    ToolRegistry.register(SystemInfoTool())
     
     try:
         workflow = load_and_parse(workflow_file)

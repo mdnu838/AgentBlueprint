@@ -59,5 +59,13 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=agentblueprint_core --cov=agentblueprint_cli --cov=agentblueprint_tools --cov=agentblueprint_config"
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentblueprint"]
+
+
 
 

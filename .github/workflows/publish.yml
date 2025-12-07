@@ -1,0 +1,52 @@
+name: Publish to PyPI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build all packages
+        run: |
+          mkdir -p dist
+          
+          # Build workspace packages
+          echo "Building agentblueprint-core..."
+          uv build --package agentblueprint-core --out-dir dist
+          
+          echo "Building agentblueprint-config..."
+          uv build --package agentblueprint-config --out-dir dist
+          
+          echo "Building agentblueprint-tools..."
+          uv build --package agentblueprint-tools --out-dir dist
+          
+          echo "Building agentblueprint-cli..."
+          uv build --package agentblueprint-cli --out-dir dist
+          
+          # Build root metapackage
+          echo "Building root agentblueprint..."
+          uv build --out-dir dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages_dir: dist/
+          skip_existing: true # Useful if version hasn't changed for some packages

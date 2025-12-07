@@ -7,7 +7,10 @@ from rich.table import Table
 
 from agentblueprint_core import ToolRegistry
 # Import all tools to ensure they are registered for listing
-from agentblueprint_tools import CalculatorTool, EchoTool, PythonREPLTool, HTTPClientTool, WebSearchTool
+from agentblueprint_tools import (
+    CalculatorTool, EchoTool, PythonREPLTool, HTTPClientTool, WebSearchTool,
+    FileReadTool, FileWriteTool, SystemTimeTool, SystemInfoTool
+)
 
 console = Console()
 
@@ -25,6 +28,10 @@ def list_tools():
     ToolRegistry.register(PythonREPLTool())
     ToolRegistry.register(HTTPClientTool())
     ToolRegistry.register(WebSearchTool())
+    ToolRegistry.register(FileReadTool())
+    ToolRegistry.register(FileWriteTool())
+    ToolRegistry.register(SystemTimeTool())
+    ToolRegistry.register(SystemInfoTool())
     
     available_tools = ToolRegistry.list_all()
     
