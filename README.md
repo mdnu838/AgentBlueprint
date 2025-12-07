@@ -1,260 +1,95 @@
 # AgentBlueprint
 
-**A uv-powered Python toolkit for building multi-agent systems with flexible workflows.**
+**A modular, agentic workflow engine for Python.**
 
-🚀 **Build multi-agent systems in minutes, not hours**
+AgentBlueprint is a comprehensive toolkit for building and orchestrating AI agents. It supports sequential, parallel, and graph-based workflows, integrated with a powerful tool system and modern observability features.
 
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+## 🚀 Features
 
----
+*   **Flexible Workflows**: Orchestrate agents using Sequential, Parallel, or DAG-based Graph workflows.
+*   **Pluggable LLMs**: Switch between providers seamlessly (e.g., OpenAI, Mock) using a unified `LLMProvider` interface.
+*   **Rich Tool Ecosystem**: Includes built-in tools for Python execution, Web Search, and HTTP requests, with an easy API to build your own.
+*   **Agent Memory**: Built-in short-term memory system handling context windows.
+*   **Observability First**: Real-time structured logging and event tracing (Callback system).
+*   **Production Ready**: CLI tools for scaffolding (`ab init`), deployment (`ab docker`), and execution (`ab run`).
 
-## ✨ Key Features
+## 📦 Installation
 
-- 🖥️ **CLI & Config-First**: Use code OR YAML/JSON configs
-- 🧩 **Modular Design**: Mix and match tools, agents, workflows
-- ⚡ **Modern Python**: Built with uv, Pydantic, and type hints
-- 🔧 **Extensible**: Easy to add custom tools and agents
-- 📦 **Mono-Repo**: Clean workspace structure for teams
-
----
-
-## 🎯 Who Is This For?
-
-✅ **Beginners** - No coding required! Use YAML configs to create agents  
-✅ **Developers** - Code-first API for full control  
-✅ **Teams** - Mono-repo structure with clear separation
-
----
-
-## 🚀 Quick Start
-
-### Installation
+This project is managed with `uv`.
 
 ```bash
-# Install via uv
-uv tool install agentblueprint
+# Clone the repository
+git clone https://github.com/your-org/AgentBlueprint.git
+cd AgentBlueprint
 
-# Verify
-ab --version
+# Install dependencies
+uv sync
 ```
 
-### Create Your First Agent (YAML)
+## 🛠️ Quick Start
+
+### 1. Initialize a Project
+
+Create a new AgentBlueprint project with the standard structure:
+
+```bash
+uv run ab init my-agent-app
+cd my-agent-app
+uv sync
+```
+
+### 2. Configure Your Agent
+
+Check `workflow.yaml` to define your agent and its behavior:
 
 ```yaml
-# workflow.yaml
 agents:
-  assistant:
+  researcher:
     model: openai:gpt-4
-    system_prompt: "You are a helpful assistant."
-    tools: []
+    system_prompt: "You are a research assistant."
+    tools:
+      - web_search
 
 workflow:
   type: sequential
   steps:
-    - agent: assistant
-      input: "{{ user_input }}"
+    - agent: researcher
 ```
+
+Don't forget to set your API keys in `.env`:
+```bash
+cp .env.example .env
+# Edit .env with your OPENAI_API_KEY
+```
+
+### 3. Run the Workflow
 
 ```bash
-ab run workflow.yaml --input "Hello, world!"
+uv run ab run workflow.yaml --input "What is the latest version of Python?"
 ```
 
-### Create Your First Agent (Code)
+## 🏗️ Architecture
 
-```python
-from agentblueprint_core import Agent
+The project is structured as a mono-repo with the following packages:
 
-agent = Agent(
-    name="assistant",
-    model="openai:gpt-4",
-    system_prompt="You are a helpful assistant."
-)
+*   **`agentblueprint-core`**: The runtime engine (Agents, Workflows, Memory, LLM Providers).
+*   **`agentblueprint-cli`**: The command-line interface (`ab`).
+*   **`agentblueprint-tools`**: A collection of standard tools (Search, Calculator, REPL).
+*   **`agentblueprint-config`**: Configuration loading and parsing logic (YAML/JSON).
 
-response = agent.run("Hello, world!")
-print(response)
-```
+## 🧪 Testing
 
----
-
-## 📚 Documentation
-
-- **[Full Design Doc](README_v2.md)** - Complete architecture and roadmap
-- **[Examples](examples/)** - Code samples and workflows
-- **[Contributing](CONTRIBUTING.md)** - How to contribute
-
----
-
-## 🏗️ Project Structure
-
-```
-agentblueprint/
-├── packages/
-│   ├── agentblueprint-core/     # Core agent runtime
-│   ├── agentblueprint-cli/      # CLI tool
-│   ├── agentblueprint-tools/    # Pre-built tools
-│   └── agentblueprint-config/   # Config management
-├── examples/                     # Example workflows
-├── tests/                        # Integration tests
-├── experiments/                  # Internal experiments (gitignored)
-└── internal_docs/                # Internal docs (gitignored)
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Run the test suite with `pytest`:
 
 ```bash
-# Clone and setup
-git clone https://github.com/yourusername/agentblueprint.git
-cd agentblueprint
-uv sync
-
-# Run tests
 uv run pytest
-
-# Format code
-uv run ruff format .
 ```
 
----
+## 🐳 Deployment
 
-## 📄 License
+Generate a production-ready Dockerfile:
 
-Apache-2.0 - see [LICENSE](LICENSE) for details.
-
----
-
-## 🌟 Why AgentBlueprint?
-
-| Feature | AgentBlueprint | Others |
-|---------|---------------|--------|
-| **uv-native** | ✅ | ❌ |
-| **Config-first option** | ✅ | Limited |
-| **Mono-repo structure** | ✅ | ❌ |
-| **Beginner-friendly** | ✅ YAML configs | Code-only |
-| **Production-ready** | ✅ | Varies |
-
----
-
-**Build smarter agents, faster. 🚀**
-
-[Get Started](README_v2.md) | [Examples](examples/) | [Documentation](README_v2.md)
-
-* **FastAPI**
-* **Flask**
-* **Django**
-* **OpenAPI-based services**
-* **TensorFlow inference API basics**
-* **Simple combinations** (e.g., FastAPI + OpenAI)
-
-No over-complicated integrations. Only essential boilerplate.
-
-### 🧠 Agent Generator (`ab agent`)
-
-Bootstrap an AI agent with:
-
-* Basic agent loop
-* Configurable tool system
-* A small set of built-in tools:
-
-  * Search
-  * Math/Calculator
-  * File Reader
-  * Simple HTTP Request tool
-
-The goal: a clean starting point, not an overloaded framework.
-
-### 🧩 Optional Tool Packs (Simplified)
-
-Add minimal optional packs:
-
+```bash
+uv run ab docker
+docker build -t my-agent-app .
 ```
-ab agent --toolpack basic
-ab agent --toolpack ai
-```
-
-These packs remain lightweight.
-
-### 🔨 Optional DevOps Essentials
-
-(Optional, not required)
-
-* Dockerfile
-* requirements.txt
-* Basic GitHub Actions workflow
-
-### 📘 Documentation Templates
-
-* Simple README
-* Basic API docs (if generating FastAPI)
-
----
-
-## 🧱 Example Folder Structure
-
-```
-myproject/
-  app/
-    main.py
-  agent/
-    core.py
-    tools/
-  config/
-    settings.yaml
-  requirements.txt
-  README.md
-```
-
----
-
-## 🖥 Basic Commands
-
-### Create a web project
-
-```
-ab fastapi
-ab flask
-ab django
-```
-
-### Create an AI agent
-
-```
-ab agent
-ab agent --toolpack basic
-```
-
-### Add optional devops
-
-```
-ab deploy docker
-```
-
----
-
-## 🧭 Roadmap (Simplified)
-
-* Expand clean templates for more frameworks
-* Add a few more lightweight tools for agents
-* Improve CLI help & ergonomics
-
----
-
-## 📄 License
-
-MIT
-
----
-
-## 🤝 Contributions
-
-Contributions welcome — keep additions simple and focused.
-
----
-
-## 🌟 Summary
-
-AgentBlueprint is a **simple, clean, and practical** scaffolding generator for Python projects and AI agents. It avoids bloat and focuses on what developers need most: a strong, minimal foundation to build on.

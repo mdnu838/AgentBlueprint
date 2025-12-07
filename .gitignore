@@ -47,8 +47,8 @@ htmlcov/
 .nox/
 
 # Internal folders (not for public repo)
-experiments/
-internal_docs/
+# experiments/
+# internal_docs/
 
 # Backup files
 *.bak

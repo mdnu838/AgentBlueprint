@@ -9,16 +9,18 @@ authors = [
     { name = "AgentBlueprint Team" }
 ]
 
-dependencies = []
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.1.0",
-    "mypy>=1.5.0",
-    "pre-commit>=3.4.0",
+dependencies = [
+    "agentblueprint-core",
+    "agentblueprint-cli",
+    "agentblueprint-tools",
+    "agentblueprint-config",
 ]
+
+[tool.uv.sources]
+agentblueprint-core = { workspace = true }
+agentblueprint-cli = { workspace = true }
+agentblueprint-tools = { workspace = true }
+agentblueprint-config = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -57,6 +59,5 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=agentblueprint_core --cov=agentblueprint_cli --cov=agentblueprint_tools --cov=agentblueprint_config"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+
+

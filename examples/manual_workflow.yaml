@@ -1,0 +1,12 @@
+
+agents:
+  echo_agent:
+    model: mock:gpt-4
+    system_prompt: "You are an echo agent."
+    tools:
+      - echo
+
+workflow:
+  type: sequential
+  steps:
+    - agent: echo_agent
