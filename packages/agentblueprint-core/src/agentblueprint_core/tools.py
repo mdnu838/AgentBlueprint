@@ -131,3 +131,44 @@ class ToolRegistry:
         This is mainly useful for testing to ensure a clean state.
         """
         cls._tools.clear()
+
+
+class VectorSearchTool(Tool):
+    """
+    Tool for searching a vector database.
+    """
+    name: str = "vector_search"
+    description: str = "Search a knowledge base for relevant information."
+
+    def __init__(self, vector_store: Any, top_k: int = 3, **data):
+        super().__init__(**data)
+        self.vector_store = vector_store
+        self.top_k = top_k
+        self.parameters = {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query."
+                }
+            },
+            "required": ["query"]
+        }
+
+    def run(self, query: str, **kwargs) -> str:
+        """Execute the search."""
+        try:
+            results = self.vector_store.search(query, top_k=self.top_k)
+            if not results:
+                return "No relevant information found."
+
+            formatted = []
+            for i, res in enumerate(results):
+                text = res.get('text', '')
+                meta = res.get('metadata', {})
+                score = res.get('score', 0.0)
+                formatted.append(f"Result {i+1} (Score: {score:.2f}):\n{text}")
+
+            return "\n\n".join(formatted)
+        except Exception as e:
+            return f"Error during vector search: {str(e)}"
