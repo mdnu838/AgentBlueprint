@@ -54,3 +54,4 @@ htmlcov/
 *.bak
 *.old
 *_old.md
+packages/agentblueprint-ui/node_modules/

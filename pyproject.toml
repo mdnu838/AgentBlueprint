@@ -14,9 +14,11 @@ dependencies = [
     "agentblueprint-cli",
     "agentblueprint-tools",
     "agentblueprint-config",
+    "agentblueprint-api",
 ]
 
 [tool.uv.sources]
+agentblueprint-api = { workspace = true }
 agentblueprint-core = { workspace = true }
 agentblueprint-cli = { workspace = true }
 agentblueprint-tools = { workspace = true }
@@ -28,6 +30,7 @@ members = [
     "packages/agentblueprint-cli",
     "packages/agentblueprint-tools",
     "packages/agentblueprint-config",
+    "packages/agentblueprint-api",
 ]
 
 [dependency-groups]
