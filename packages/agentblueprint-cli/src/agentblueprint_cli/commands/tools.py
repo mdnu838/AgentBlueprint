@@ -33,6 +33,9 @@ def list_tools():
     ToolRegistry.register(SystemTimeTool())
     ToolRegistry.register(SystemInfoTool())
     
+    # Load dynamically installed plugin tools
+    ToolRegistry.load_plugins()
+
     available_tools = ToolRegistry.list_all()
     
     table = Table(title="Available Tools")

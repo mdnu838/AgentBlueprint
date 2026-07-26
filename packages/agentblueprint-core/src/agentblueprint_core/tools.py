@@ -6,7 +6,11 @@ to perform specific tasks.
 """
 
 from abc import ABC, abstractmethod
+import importlib.metadata
+import logging
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class Tool(ABC):
@@ -172,3 +176,31 @@ class VectorSearchTool(Tool):
             return "\n\n".join(formatted)
         except Exception as e:
             return f"Error during vector search: {str(e)}"
+    @classmethod
+    def load_plugins(cls) -> None:
+        """
+        Discover and load tools from installed python packages using entry points.
+
+        Looks for the 'agentblueprint.tools' entry point group.
+        Each entry point should point to a Tool class or instance.
+        """
+        try:
+            entry_points = importlib.metadata.entry_points(group="agentblueprint.tools")
+        except TypeError:
+            # Fallback for older python versions if needed
+            entry_points_all = importlib.metadata.entry_points()
+            entry_points = entry_points_all.get("agentblueprint.tools", [])
+
+        for ep in entry_points:
+            try:
+                plugin = ep.load()
+                # If it's a class (subclass of Tool), instantiate it
+                if isinstance(plugin, type) and issubclass(plugin, Tool):
+                    cls.register(plugin())
+                # If it's an instance of Tool
+                elif isinstance(plugin, Tool):
+                    cls.register(plugin)
+                else:
+                    logger.warning(f"Plugin {ep.name} is not a valid Tool: {plugin}")
+            except Exception as e:
+                logger.error(f"Failed to load plugin {ep.name}: {e}")
