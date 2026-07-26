@@ -14,7 +14,7 @@ members = [
 [[package]]
 name = "agentblueprint"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "agentblueprint-cli" },
     { name = "agentblueprint-config" },
