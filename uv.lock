@@ -8,17 +8,19 @@ members = [
     "agentblueprint-cli",
     "agentblueprint-config",
     "agentblueprint-core",
+    "agentblueprint-eval",
     "agentblueprint-tools",
 ]
 
 [[package]]
 name = "agentblueprint"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "agentblueprint-cli" },
     { name = "agentblueprint-config" },
     { name = "agentblueprint-core" },
+    { name = "agentblueprint-eval" },
     { name = "agentblueprint-tools" },
 ]
 
@@ -35,6 +37,7 @@ requires-dist = [
     { name = "agentblueprint-cli", editable = "packages/agentblueprint-cli" },
     { name = "agentblueprint-config", editable = "packages/agentblueprint-config" },
     { name = "agentblueprint-core", editable = "packages/agentblueprint-core" },
+    { name = "agentblueprint-eval", editable = "packages/agentblueprint-eval" },
     { name = "agentblueprint-tools", editable = "packages/agentblueprint-tools" },
 ]
 
@@ -115,6 +118,21 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
 ]
 provides-extras = ["openai", "anthropic", "all"]
+
+[[package]]
+name = "agentblueprint-eval"
+version = "0.1.0"
+source = { editable = "packages/agentblueprint-eval" }
+dependencies = [
+    { name = "agentblueprint-core" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "agentblueprint-core", editable = "packages/agentblueprint-core" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+]
 
 [[package]]
 name = "agentblueprint-tools"
