@@ -18,6 +18,11 @@ class Workflow(BaseModel, ABC):
         """Execute the workflow."""
         pass
 
+    @abstractmethod
+    def get_total_usage(self) -> Dict[str, Any]:
+        """Aggregate token usage and cost for all agents in the workflow."""
+        pass
+
 class SequentialWorkflow(Workflow):
     """
     A simple workflow that runs agents in a sequence.
@@ -37,6 +42,15 @@ class SequentialWorkflow(Workflow):
 
         cm.on_workflow_end(self.name, current_input)
         return current_input
+
+    def get_total_usage(self) -> Dict[str, Any]:
+        usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "cost": 0.0}
+        for agent in self.agents:
+            usage["prompt_tokens"] += agent.usage["prompt_tokens"]
+            usage["completion_tokens"] += agent.usage["completion_tokens"]
+            usage["total_tokens"] += agent.usage["total_tokens"]
+            usage["cost"] += agent.usage["cost"]
+        return usage
 
 class ParallelWorkflow(Workflow):
     """
@@ -69,6 +83,15 @@ class ParallelWorkflow(Workflow):
         
         cm.on_workflow_end(self.name, results)
         return results
+
+    def get_total_usage(self) -> Dict[str, Any]:
+        usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "cost": 0.0}
+        for agent in self.agents:
+            usage["prompt_tokens"] += agent.usage["prompt_tokens"]
+            usage["completion_tokens"] += agent.usage["completion_tokens"]
+            usage["total_tokens"] += agent.usage["total_tokens"]
+            usage["cost"] += agent.usage["cost"]
+        return usage
 
 class WorkflowNode(BaseModel):
     id: str
@@ -130,3 +153,12 @@ class GraphWorkflow(Workflow):
                         
         cm.on_workflow_end(self.name, results)
         return results
+
+    def get_total_usage(self) -> Dict[str, Any]:
+        usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "cost": 0.0}
+        for node in self.nodes:
+            usage["prompt_tokens"] += node.agent.usage["prompt_tokens"]
+            usage["completion_tokens"] += node.agent.usage["completion_tokens"]
+            usage["total_tokens"] += node.agent.usage["total_tokens"]
+            usage["cost"] += node.agent.usage["cost"]
+        return usage

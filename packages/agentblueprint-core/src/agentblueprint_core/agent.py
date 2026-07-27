@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 from agentblueprint_core.tools import Tool
 from agentblueprint_core.memory import Memory
 
+from typing import Any, Optional, Dict
+
 class Agent(BaseModel):
     """
     Represents an AI Agent with a model, system prompt, and tools.
@@ -16,6 +18,12 @@ class Agent(BaseModel):
     system_prompt: str = ""
     tools: list[Tool] = Field(default_factory=list)
     memory: Optional[Memory] = None
+    usage: Dict[str, Any] = Field(default_factory=lambda: {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "cost": 0.0
+    })
     
     class Config:
         arbitrary_types_allowed = True
@@ -43,12 +51,20 @@ class Agent(BaseModel):
         
         try:
             provider = LLMFactory.create(self.model)
-            response = provider.generate(
+            llm_response = provider.generate(
                 prompt=input_text,
                 system_prompt=self.system_prompt,
                 tools=self.tools,
                 history=history # Pass history
             )
+            response = llm_response.content
+
+            # Update token usage tracking
+            self.usage["prompt_tokens"] += llm_response.prompt_tokens
+            self.usage["completion_tokens"] += llm_response.completion_tokens
+            self.usage["total_tokens"] += llm_response.total_tokens
+            self.usage["cost"] += llm_response.cost
+
         except Exception as e:
             response = f"Agent Error: {str(e)}"
             
