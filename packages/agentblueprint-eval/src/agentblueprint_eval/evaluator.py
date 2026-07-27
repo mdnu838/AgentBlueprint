@@ -48,8 +48,8 @@ class LLMJudge:
         )
 
         try:
-            response_text = self.llm.generate(prompt=prompt, system_prompt=system_prompt)
-            return self._parse_response(response_text)
+            response = self.llm.generate(prompt=prompt, system_prompt=system_prompt)
+            return self._parse_response(response.content)
         except Exception as e:
             return EvaluationResult(score=False, reasoning=f"Evaluation failed: {str(e)}")
 
