@@ -33,6 +33,12 @@ def test_sequential_workflow(mock_agent):
     assert "ECHO" in result
     assert "Input" in result
 
+    usage = wf.get_total_usage()
+    assert usage["total_tokens"] > 0
+    assert usage["prompt_tokens"] > 0
+    assert usage["completion_tokens"] > 0
+    assert usage["cost"] == 0.0
+
 def test_parallel_workflow(echo_agent_a, echo_agent_b):
     wf = ParallelWorkflow(
         name="par_test",
@@ -41,6 +47,9 @@ def test_parallel_workflow(echo_agent_a, echo_agent_b):
     results = wf.run("Start")
     assert results["A"] == "ECHO (A): Start"
     assert results["B"] == "ECHO (B): Start"
+
+    usage = wf.get_total_usage()
+    assert usage["total_tokens"] > 0
 
 def test_graph_workflow(echo_agent_a, echo_agent_b):
     # A -> B
@@ -59,3 +68,6 @@ def test_graph_workflow(echo_agent_a, echo_agent_b):
     
     # B output should contain A's output
     assert "ECHO (A): Start" in results["node_b"]
+
+    usage = wf.get_total_usage()
+    assert usage["total_tokens"] > 0

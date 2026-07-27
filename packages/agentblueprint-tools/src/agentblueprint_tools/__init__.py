@@ -8,6 +8,7 @@ from agentblueprint_tools.http_client import HTTPClientTool
 from agentblueprint_tools.web_search import WebSearchTool
 from agentblueprint_tools.filesystem import FileReadTool, FileWriteTool
 from agentblueprint_tools.system_info import SystemTimeTool, SystemInfoTool
+from agentblueprint_tools.openapi import generate_tools_from_openapi, OpenAPIOperationTool
 
 __version__ = "0.1.0"
 
@@ -20,5 +21,7 @@ __all__ = [
     "FileReadTool",
     "FileWriteTool",
     "SystemTimeTool",
-    "SystemInfoTool"
+    "SystemInfoTool",
+    "generate_tools_from_openapi",
+    "OpenAPIOperationTool"
 ]
