@@ -14,6 +14,7 @@ dependencies = [
     "agentblueprint-cli",
     "agentblueprint-tools",
     "agentblueprint-config",
+    "agentblueprint-eval",
 ]
 
 [tool.uv.sources]
@@ -21,6 +22,7 @@ agentblueprint-core = { workspace = true }
 agentblueprint-cli = { workspace = true }
 agentblueprint-tools = { workspace = true }
 agentblueprint-config = { workspace = true }
+agentblueprint-eval = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -28,6 +30,7 @@ members = [
     "packages/agentblueprint-cli",
     "packages/agentblueprint-tools",
     "packages/agentblueprint-config",
+    "packages/agentblueprint-eval",
 ]
 
 [dependency-groups]
@@ -57,7 +60,7 @@ testpaths = ["tests", "packages/*/tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=agentblueprint_core --cov=agentblueprint_cli --cov=agentblueprint_tools --cov=agentblueprint_config"
+addopts = "-v --cov=agentblueprint_core --cov=agentblueprint_cli --cov=agentblueprint_tools --cov=agentblueprint_config --cov=agentblueprint_eval"
 
 [build-system]
 requires = ["hatchling"]
