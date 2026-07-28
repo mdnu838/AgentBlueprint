@@ -10,6 +10,7 @@ import logging
 import urllib.request
 import urllib.parse
 from urllib.error import URLError
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 import yaml
 
@@ -17,18 +18,27 @@ from agentblueprint_core import Tool
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class OpenAPIOperationConfig:
+    operation_id: str
+    method: str
+    path: str
+    base_url: str
+    description: str
+    parameters_schema: dict
+
 class OpenAPIOperationTool(Tool):
     """
     A tool that wraps a specific OpenAPI operation (HTTP endpoint).
     """
 
-    def __init__(self, operation_id: str, method: str, path: str, base_url: str, description: str, parameters_schema: dict):
-        self.name = operation_id
-        self.description = description
-        self.parameters = parameters_schema
-        self._method = method.upper()
-        self._path = path
-        self._base_url = base_url.rstrip("/")
+    def __init__(self, config: OpenAPIOperationConfig):
+        self.name = config.operation_id
+        self.description = config.description
+        self.parameters = config.parameters_schema
+        self._method = config.method.upper()
+        self._path = config.path
+        self._base_url = config.base_url.rstrip("/")
 
     def run(self, **kwargs) -> Any:
         """
@@ -176,7 +186,7 @@ def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool
             if not parameters_schema["required"]:
                 del parameters_schema["required"]
 
-            tool = OpenAPIOperationTool(
+            config = OpenAPIOperationConfig(
                 operation_id=operation_id,
                 method=method,
                 path=path,
@@ -184,6 +194,7 @@ def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool
                 description=description,
                 parameters_schema=parameters_schema
             )
+            tool = OpenAPIOperationTool(config)
             tools.append(tool)
 
     return tools
