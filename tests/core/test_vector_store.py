@@ -51,6 +51,31 @@ def test_qdrant_vector_store():
     assert results[0]["metadata"] == {"source": "test"}
     assert "score" in results[0]
 
+def test_qdrant_vector_store_add_texts_edge_cases():
+    embedder = MockEmbedder()
+    store = QdrantVectorStore(collection_name="test_collection_edge", embedder=embedder)
+    from qdrant_client.models import VectorParams, Distance
+    store.client.create_collection(
+        collection_name="test_collection_edge",
+        vectors_config=VectorParams(size=3, distance=Distance.COSINE),
+    )
+
+    # Edge case 1: empty list
+    ids_empty = store.add_texts([])
+    assert ids_empty == []
+
+    # Edge case 2: multiple texts, no metadata
+    texts = ["doc1", "doc2"]
+    ids_no_meta = store.add_texts(texts, metadatas=None)
+    assert len(ids_no_meta) == 2
+
+    # Verify search after adding texts without metadata works correctly
+    results = store.search("doc1", top_k=2)
+    assert len(results) >= 2
+    # Ensure they have empty dictionaries as metadata
+    for res in results:
+        assert isinstance(res["metadata"], dict)
+
 # Testing Pinecone requires API keys and network calls, so we'd typically mock it completely
 # For this example, we skip actual Pinecone tests unless mocked, but we can test initialization errors.
 def test_pinecone_init_error():
