@@ -7,15 +7,18 @@ and dynamically generate `Tool` classes for each defined operation.
 
 import json
 import logging
-import urllib.request
 import urllib.parse
-from urllib.error import URLError
 from typing import Any, Dict, List, Optional, Union
 import yaml
+import httpx
 
 from agentblueprint_core import Tool
 
 logger = logging.getLogger(__name__)
+
+# Shared HTTP client for connection pooling and Keep-Alive benefits
+_http_client = httpx.Client(timeout=15.0, follow_redirects=True)
+
 
 class OpenAPIOperationTool(Tool):
     """
@@ -54,28 +57,34 @@ class OpenAPIOperationTool(Tool):
                 query_params[key] = value
 
         url = f"{self._base_url}{url_path}"
+
+        request_kwargs = {
+            "method": self._method,
+            "url": url,
+            "headers": headers,
+        }
+
         if query_params:
-            url += "?" + urllib.parse.urlencode(query_params)
+            request_kwargs["params"] = query_params
 
-        request_data = None
         if body_data is not None:
-            request_data = json.dumps(body_data).encode("utf-8")
-
-        req = urllib.request.Request(url, data=request_data, method=self._method, headers=headers)
+            request_kwargs["json"] = body_data
 
         try:
-            with urllib.request.urlopen(req) as response:
-                resp_body = response.read().decode("utf-8")
-                try:
-                    return json.loads(resp_body)
-                except json.JSONDecodeError:
-                    return resp_body
-        except urllib.error.HTTPError as e:
-            return f"HTTP Error {e.code}: {e.read().decode('utf-8')}"
-        except URLError as e:
+            response = _http_client.request(**request_kwargs)
+            response.raise_for_status()
+            resp_body = response.text
+            try:
+                return json.loads(resp_body)
+            except json.JSONDecodeError:
+                return resp_body
+        except httpx.HTTPStatusError as e:
+            return f"HTTP Error {e.response.status_code}: {e.response.text}"
+        except httpx.RequestError as e:
             return f"URL Error: {str(e)}"
         except Exception as e:
             return f"Error executing request: {str(e)}"
+
 
 def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool]:
     """
@@ -92,12 +101,13 @@ def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool
     if isinstance(schema, str):
         if schema.startswith("http://") or schema.startswith("https://"):
             try:
-                with urllib.request.urlopen(schema) as response:
-                    content = response.read().decode("utf-8")
-                    if schema.endswith(".yaml") or schema.endswith(".yml"):
-                        spec = yaml.safe_load(content)
-                    else:
-                        spec = json.loads(content)
+                response = _http_client.get(schema)
+                response.raise_for_status()
+                content = response.text
+                if schema.endswith(".yaml") or schema.endswith(".yml"):
+                    spec = yaml.safe_load(content)
+                else:
+                    spec = json.loads(content)
             except Exception as e:
                 logger.error(f"Failed to load OpenAPI schema from URL {schema}: {e}")
                 return []
