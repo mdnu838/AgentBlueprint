@@ -36,7 +36,7 @@ class SimpleMemory(Memory):
         return self.messages
     
     def get_context(self) -> str:
-        return "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in self.messages])
+        return "\n".join(f"{msg['role'].upper()}: {msg['content']}" for msg in self.messages)
 
 class NoOpMemory(Memory):
     """Memory that stores nothing."""
@@ -117,4 +117,4 @@ class SQLMemory(Memory):
 
     def get_context(self) -> str:
         history = self.get_history()
-        return "\n".join([f"{msg['role'].upper()}: {msg['content']}" for msg in history])
+        return "\n".join(f"{msg['role'].upper()}: {msg['content']}" for msg in history)
