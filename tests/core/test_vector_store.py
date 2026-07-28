@@ -58,3 +58,43 @@ def test_pinecone_init_error():
     with pytest.raises(ValueError, match="Pinecone API key is required"):
         # Without setting PINECONE_API_KEY env var
         PineconeVectorStore(index_name="test", embedder=embedder)
+
+
+def test_pinecone_vector_store_search(monkeypatch):
+    import pinecone
+
+    class MockIndex:
+        def __init__(self, index_name):
+            self.index_name = index_name
+
+        def upsert(self, vectors):
+            self.vectors = vectors
+
+        def query(self, vector, top_k, include_metadata):
+            return {
+                'matches': [
+                    {
+                        'id': '123',
+                        'score': 0.9,
+                        'metadata': {'text': 'This is a test document', 'source': 'test'}
+                    }
+                ]
+            }
+
+    class MockPinecone:
+        def __init__(self, api_key):
+            self.api_key = api_key
+
+        def Index(self, index_name):
+            return MockIndex(index_name)
+
+    monkeypatch.setattr(pinecone, "Pinecone", MockPinecone)
+
+    embedder = MockEmbedder()
+    store = PineconeVectorStore(index_name="test", embedder=embedder, api_key="test_api_key")
+
+    results = store.search("test query", top_k=1)
+    assert len(results) == 1
+    assert results[0]["text"] == "This is a test document"
+    assert results[0]["metadata"] == {"source": "test"}
+    assert results[0]["score"] == 0.9
