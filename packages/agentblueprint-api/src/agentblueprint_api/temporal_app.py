@@ -1,9 +1,11 @@
+import asyncio
 from datetime import timedelta
+
+from agentblueprint_config.loader import ConfigLoader
 from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
-import asyncio
-from agentblueprint_config.loader import ConfigLoader
+
 
 @activity.defn
 async def run_workflow_activity(workflow_yaml: str, input_data: str) -> dict:
@@ -11,8 +13,11 @@ async def run_workflow_activity(workflow_yaml: str, input_data: str) -> dict:
     try:
         import uuid
         temp_yaml_path = f"/tmp/{uuid.uuid4()}_workflow.yaml"
-        with open(temp_yaml_path, "w") as f:
-            f.write(workflow_yaml)
+
+        def write_file():
+            with open(temp_yaml_path, "w") as f:
+                f.write(workflow_yaml)
+        await asyncio.to_thread(write_file)
 
         loader = ConfigLoader()
         wf = loader.load_workflow(temp_yaml_path)
