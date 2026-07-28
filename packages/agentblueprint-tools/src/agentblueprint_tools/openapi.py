@@ -5,6 +5,7 @@ This module provides functionality to parse an OpenAPI 3.x schema
 and dynamically generate `Tool` classes for each defined operation.
 """
 
+import functools
 import json
 import logging
 import urllib.request
@@ -77,6 +78,12 @@ class OpenAPIOperationTool(Tool):
         except Exception as e:
             return f"Error executing request: {str(e)}"
 
+@functools.lru_cache(maxsize=128)
+def _fetch_openapi_schema(url: str) -> str:
+    """Fetch the OpenAPI schema content from a URL, caching the result."""
+    with urllib.request.urlopen(url) as response:
+        return response.read().decode("utf-8")
+
 def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool]:
     """
     Parse an OpenAPI schema and generate Tools.
@@ -92,12 +99,11 @@ def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool
     if isinstance(schema, str):
         if schema.startswith("http://") or schema.startswith("https://"):
             try:
-                with urllib.request.urlopen(schema) as response:
-                    content = response.read().decode("utf-8")
-                    if schema.endswith(".yaml") or schema.endswith(".yml"):
-                        spec = yaml.safe_load(content)
-                    else:
-                        spec = json.loads(content)
+                content = _fetch_openapi_schema(schema)
+                if schema.endswith(".yaml") or schema.endswith(".yml"):
+                    spec = yaml.safe_load(content)
+                else:
+                    spec = json.loads(content)
             except Exception as e:
                 logger.error(f"Failed to load OpenAPI schema from URL {schema}: {e}")
                 return []
