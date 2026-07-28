@@ -1,3 +1,4 @@
+import os
 import uuid
 from fastapi import FastAPI, HTTPException
 from agentblueprint_api.schemas import WorkflowRunRequest, WorkflowRunResponse, WorkflowStatusResponse
@@ -12,9 +13,12 @@ import threading
 
 app = FastAPI(title="AgentBlueprint API")
 
+allowed_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "")
+allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For dev, allows all origins. Adjust for production.
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
