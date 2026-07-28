@@ -82,14 +82,31 @@ class OpenAILLM(LLMProvider):
             
         messages.append({"role": "user", "content": prompt})
         
-        # Simple tool definition (omitted for phase 1 of LLM integration - just text generation first)
-        # TODO: Add tool calling support
+        openai_tools = None
+        if tools:
+            openai_tools = []
+            for tool in tools:
+                tool_def = {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                    }
+                }
+                if tool.parameters:
+                    tool_def["function"]["parameters"] = tool.parameters
+
+                openai_tools.append(tool_def)
         
         try:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages
-            )
+            kwargs = {
+                "model": self.model_name,
+                "messages": messages
+            }
+            if openai_tools:
+                kwargs["tools"] = openai_tools
+
+            response = self.client.chat.completions.create(**kwargs)
             content = response.choices[0].message.content or ""
             usage = response.usage
 
