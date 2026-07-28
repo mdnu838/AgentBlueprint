@@ -16,6 +16,8 @@ class WorkflowStateStore(BaseModel):
         """Load workflow state."""
         raise NotImplementedError
 
+import threading
+
 try:
     from sqlalchemy import create_engine, Column, String, Text, DateTime
     from sqlalchemy.orm import declarative_base, sessionmaker
@@ -34,16 +36,19 @@ except ImportError:
     WorkflowState = None
 
 _state_engine_cache = {}
+_state_engine_lock = threading.Lock()
 
 def _get_state_engine_and_session(db_url: str):
     if StateBase is None:
         raise ImportError("sqlalchemy is required for SQLWorkflowStateStore. Install with `pip install sqlalchemy`.")
 
     if db_url not in _state_engine_cache:
-        engine = create_engine(db_url)
-        StateBase.metadata.create_all(engine)
-        session_maker = sessionmaker(bind=engine)
-        _state_engine_cache[db_url] = (engine, session_maker)
+        with _state_engine_lock:
+            if db_url not in _state_engine_cache:
+                engine = create_engine(db_url)
+                StateBase.metadata.create_all(engine)
+                session_maker = sessionmaker(bind=engine)
+                _state_engine_cache[db_url] = (engine, session_maker)
 
     return _state_engine_cache[db_url]
 
