@@ -77,6 +77,99 @@ class OpenAPIOperationTool(Tool):
         except Exception as e:
             return f"Error executing request: {str(e)}"
 
+def _load_openapi_spec(schema: Union[str, Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Load an OpenAPI schema from a URL, file path, or dictionary.
+    """
+    if isinstance(schema, str):
+        if schema.startswith("http://") or schema.startswith("https://"):
+            try:
+                with urllib.request.urlopen(schema) as response:
+                    content = response.read().decode("utf-8")
+                    if schema.endswith(".yaml") or schema.endswith(".yml"):
+                        return yaml.safe_load(content)
+                    else:
+                        return json.loads(content)
+            except Exception as e:
+                logger.error(f"Failed to load OpenAPI schema from URL {schema}: {e}")
+                return None
+        else:
+            try:
+                with open(schema, "r") as f:
+                    if schema.endswith(".yaml") or schema.endswith(".yml"):
+                        return yaml.safe_load(f)
+                    else:
+                        return json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load OpenAPI schema from file {schema}: {e}")
+                return None
+    elif isinstance(schema, dict):
+        return schema
+    else:
+        logger.error("Schema must be a URL, file path, or dictionary.")
+        return None
+
+def _create_tool_from_operation(path: str, method: str, operation: Dict[str, Any], base_url: str) -> Optional[OpenAPIOperationTool]:
+    """
+    Create an OpenAPIOperationTool from a single OpenAPI operation definition.
+    """
+    if method.lower() not in ["get", "post", "put", "delete", "patch"]:
+        return None
+
+    # Generate operation ID if not present
+    operation_id = operation.get("operationId")
+    if not operation_id:
+        # E.g., GET /users/{id} -> get_users_id
+        clean_path = path.strip("/").replace("/", "_").replace("{", "").replace("}", "")
+        operation_id = f"{method}_{clean_path}"
+
+    description = operation.get("summary", operation.get("description", f"{method.upper()} {path}"))
+
+    # Build a simple parameters schema
+    parameters_schema = {
+        "type": "object",
+        "properties": {},
+        "required": []
+    }
+
+    for param in operation.get("parameters", []):
+        name = param.get("name")
+        if not name:
+            continue
+        param_schema = param.get("schema", {"type": "string"})
+        parameters_schema["properties"][name] = {
+            "type": param_schema.get("type", "string"),
+            "description": param.get("description", "")
+        }
+        if param.get("required"):
+            parameters_schema["required"].append(name)
+
+    # Simple body handling for POST/PUT
+    request_body = operation.get("requestBody")
+    if request_body:
+        content = request_body.get("content", {})
+        json_content = content.get("application/json", {})
+        body_schema = json_content.get("schema", {})
+
+        if body_schema.get("type") == "object" and "properties" in body_schema:
+            for prop_name, prop_details in body_schema["properties"].items():
+                 parameters_schema["properties"][prop_name] = prop_details
+            if "required" in body_schema:
+                 parameters_schema["required"].extend(body_schema["required"])
+
+    # Clean up empty required list
+    if not parameters_schema["required"]:
+        del parameters_schema["required"]
+
+    return OpenAPIOperationTool(
+        operation_id=operation_id,
+        method=method,
+        path=path,
+        base_url=base_url,
+        description=description,
+        parameters_schema=parameters_schema
+    )
+
 def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool]:
     """
     Parse an OpenAPI schema and generate Tools.
@@ -87,36 +180,7 @@ def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool
     Returns:
         List of generated Tools.
     """
-    spec = None
-
-    if isinstance(schema, str):
-        if schema.startswith("http://") or schema.startswith("https://"):
-            try:
-                with urllib.request.urlopen(schema) as response:
-                    content = response.read().decode("utf-8")
-                    if schema.endswith(".yaml") or schema.endswith(".yml"):
-                        spec = yaml.safe_load(content)
-                    else:
-                        spec = json.loads(content)
-            except Exception as e:
-                logger.error(f"Failed to load OpenAPI schema from URL {schema}: {e}")
-                return []
-        else:
-            try:
-                with open(schema, "r") as f:
-                    if schema.endswith(".yaml") or schema.endswith(".yml"):
-                        spec = yaml.safe_load(f)
-                    else:
-                        spec = json.load(f)
-            except Exception as e:
-                logger.error(f"Failed to load OpenAPI schema from file {schema}: {e}")
-                return []
-    elif isinstance(schema, dict):
-        spec = schema
-    else:
-        logger.error("Schema must be a URL, file path, or dictionary.")
-        return []
-
+    spec = _load_openapi_spec(schema)
     if not spec:
         return []
 
@@ -128,62 +192,8 @@ def generate_tools_from_openapi(schema: Union[str, Dict[str, Any]]) -> List[Tool
 
     for path, methods in paths.items():
         for method, operation in methods.items():
-            if method.lower() not in ["get", "post", "put", "delete", "patch"]:
-                continue
-
-            # Generate operation ID if not present
-            operation_id = operation.get("operationId")
-            if not operation_id:
-                # E.g., GET /users/{id} -> get_users_id
-                clean_path = path.strip("/").replace("/", "_").replace("{", "").replace("}", "")
-                operation_id = f"{method}_{clean_path}"
-
-            description = operation.get("summary", operation.get("description", f"{method.upper()} {path}"))
-
-            # Build a simple parameters schema
-            parameters_schema = {
-                "type": "object",
-                "properties": {},
-                "required": []
-            }
-
-            for param in operation.get("parameters", []):
-                name = param.get("name")
-                if not name:
-                    continue
-                param_schema = param.get("schema", {"type": "string"})
-                parameters_schema["properties"][name] = {
-                    "type": param_schema.get("type", "string"),
-                    "description": param.get("description", "")
-                }
-                if param.get("required"):
-                    parameters_schema["required"].append(name)
-
-            # Simple body handling for POST/PUT
-            request_body = operation.get("requestBody")
-            if request_body:
-                content = request_body.get("content", {})
-                json_content = content.get("application/json", {})
-                body_schema = json_content.get("schema", {})
-
-                if body_schema.get("type") == "object" and "properties" in body_schema:
-                    for prop_name, prop_details in body_schema["properties"].items():
-                         parameters_schema["properties"][prop_name] = prop_details
-                    if "required" in body_schema:
-                         parameters_schema["required"].extend(body_schema["required"])
-
-            # Clean up empty required list
-            if not parameters_schema["required"]:
-                del parameters_schema["required"]
-
-            tool = OpenAPIOperationTool(
-                operation_id=operation_id,
-                method=method,
-                path=path,
-                base_url=base_url,
-                description=description,
-                parameters_schema=parameters_schema
-            )
-            tools.append(tool)
+            tool = _create_tool_from_operation(path, method, operation, base_url)
+            if tool:
+                tools.append(tool)
 
     return tools
