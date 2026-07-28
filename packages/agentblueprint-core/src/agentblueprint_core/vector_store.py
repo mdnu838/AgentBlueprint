@@ -59,19 +59,33 @@ class ChromaVectorStore(VectorStore):
         return self.add_texts([text], [metadata] if metadata else None)[0]
 
     def add_texts(self, texts: List[str], metadatas: Optional[List[Dict[str, Any]]] = None) -> List[str]:
+        if not texts:
+            return []
+
         import uuid
         ids = [str(uuid.uuid4()) for _ in texts]
         embeddings = self.embedder.embed_documents(texts) if self.embedder else None
 
-        add_kwargs = {
-            "documents": texts,
-            "metadatas": metadatas if metadatas else [{} for _ in texts],
-            "ids": ids
-        }
-        if embeddings:
-            add_kwargs["embeddings"] = embeddings
+        batch_size = self.client.get_max_batch_size()
 
-        self.collection.add(**add_kwargs)
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            batch_ids = ids[i:i + batch_size]
+
+            # Extract metadata and embeddings for the batch
+            batch_metadatas = metadatas[i:i + batch_size] if metadatas else [{} for _ in batch_texts]
+
+            add_kwargs = {
+                "documents": batch_texts,
+                "metadatas": batch_metadatas,
+                "ids": batch_ids
+            }
+
+            if embeddings:
+                add_kwargs["embeddings"] = embeddings[i:i + batch_size]
+
+            self.collection.add(**add_kwargs)
+
         return ids
 
     def search(self, query: str, top_k: int = 4) -> List[Dict[str, Any]]:
