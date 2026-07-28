@@ -1,6 +1,5 @@
 from agentblueprint_api.celery_app import celery_app
 from agentblueprint_config.loader import ConfigLoader
-import json
 import asyncio
 
 @celery_app.task(bind=True, name="agentblueprint_api.tasks.run_workflow_task")
