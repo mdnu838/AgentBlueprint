@@ -120,6 +120,9 @@ class QdrantVectorStore(VectorStore):
         return self.add_texts([text], [metadata] if metadata else None)[0]
 
     def add_texts(self, texts: List[str], metadatas: Optional[List[Dict[str, Any]]] = None) -> List[str]:
+        if metadatas is not None and len(texts) != len(metadatas):
+            raise ValueError("Number of texts and metadatas must match.")
+
         from qdrant_client.models import PointStruct
         import uuid
 
