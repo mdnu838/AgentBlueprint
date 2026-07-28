@@ -1,6 +1,28 @@
 import pytest
-from agentblueprint_core.memory import SQLMemory
+from agentblueprint_core.memory import SQLMemory, SimpleMemory
 from agentblueprint_core.state import SQLWorkflowStateStore
+
+def test_simple_memory():
+    memory = SimpleMemory()
+
+    # Check initial state
+    assert memory.get_history() == []
+
+    # Add messages
+    memory.add("user", "Hello there")
+    memory.add("assistant", "Hi! How can I help?")
+
+    # Check history
+    history = memory.get_history()
+    assert len(history) == 2
+    assert history[0] == {"role": "user", "content": "Hello there"}
+    assert history[1] == {"role": "assistant", "content": "Hi! How can I help?"}
+
+    # Check context
+    context = memory.get_context()
+    assert "USER: Hello there" in context
+    assert "ASSISTANT: Hi! How can I help?" in context
+
 
 def test_sql_memory():
     memory = SQLMemory(db_url="sqlite:///:memory:", session_id="test_session")
