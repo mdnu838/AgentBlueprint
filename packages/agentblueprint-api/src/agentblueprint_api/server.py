@@ -6,7 +6,6 @@ from celery.result import AsyncResult
 from agentblueprint_api.celery_app import celery_app
 from temporalio.client import Client
 from agentblueprint_api.temporal_app import AgentBlueprintTemporalWorkflow
-import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 import threading
 
