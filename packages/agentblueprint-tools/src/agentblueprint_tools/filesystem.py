@@ -8,27 +8,51 @@ from agentblueprint_core import Tool
 class FileReadTool(Tool):
     name = "file_read"
     description = "Read content from a file. Input: file_path"
+
+    def __init__(self, base_dir: Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.base_dir = Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
     
     def run(self, file_path: str) -> str:
         try:
             path = Path(file_path)
-            if not path.exists():
+            if path.is_absolute():
+                resolved_path = path.resolve()
+            else:
+                resolved_path = (self.base_dir / path).resolve()
+
+            if not resolved_path.is_relative_to(self.base_dir):
+                return f"Error: Access denied. Path traversal detected for {file_path}."
+
+            if not resolved_path.exists():
                 return f"Error: File {file_path} does not exist."
-            if not path.is_file():
+            if not resolved_path.is_file():
                 return f"Error: {file_path} is not a file."
-            return path.read_text()
+            return resolved_path.read_text()
         except Exception as e:
             return f"Error reading file: {e}"
 
 class FileWriteTool(Tool):
     name = "file_write"
     description = "Write content to a file. Inputs: file_path, content"
+
+    def __init__(self, base_dir: Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.base_dir = Path(base_dir).resolve() if base_dir else Path.cwd().resolve()
     
     def run(self, file_path: str, content: str) -> str:
         try:
             path = Path(file_path)
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content)
+            if path.is_absolute():
+                resolved_path = path.resolve()
+            else:
+                resolved_path = (self.base_dir / path).resolve()
+
+            if not resolved_path.is_relative_to(self.base_dir):
+                return f"Error: Access denied. Path traversal detected for {file_path}."
+
+            resolved_path.parent.mkdir(parents=True, exist_ok=True)
+            resolved_path.write_text(content)
             return f"Successfully wrote to {file_path}"
         except Exception as e:
             return f"Error writing file: {e}"
