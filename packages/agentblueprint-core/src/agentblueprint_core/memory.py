@@ -49,6 +49,8 @@ class NoOpMemory(Memory):
     def get_context(self) -> str:
         return ""
 
+import threading
+
 try:
     from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
     from sqlalchemy.orm import declarative_base, sessionmaker
@@ -69,16 +71,19 @@ except ImportError:
     Message = None
 
 _memory_engine_cache = {}
+_memory_engine_lock = threading.Lock()
 
 def _get_memory_engine_and_session(db_url: str):
     if MemoryBase is None:
         raise ImportError("sqlalchemy is required for SQLMemory. Install with `pip install sqlalchemy`.")
 
     if db_url not in _memory_engine_cache:
-        engine = create_engine(db_url)
-        MemoryBase.metadata.create_all(engine)
-        session_maker = sessionmaker(bind=engine)
-        _memory_engine_cache[db_url] = (engine, session_maker)
+        with _memory_engine_lock:
+            if db_url not in _memory_engine_cache:
+                engine = create_engine(db_url)
+                MemoryBase.metadata.create_all(engine)
+                session_maker = sessionmaker(bind=engine)
+                _memory_engine_cache[db_url] = (engine, session_maker)
 
     return _memory_engine_cache[db_url]
 
