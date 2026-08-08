@@ -58,3 +58,36 @@ def test_pinecone_init_error():
     with pytest.raises(ValueError, match="Pinecone API key is required"):
         # Without setting PINECONE_API_KEY env var
         PineconeVectorStore(index_name="test", embedder=embedder)
+
+def test_pinecone_vector_store_search():
+    from unittest.mock import patch, MagicMock
+
+    with patch('pinecone.Pinecone') as MockPinecone:
+        mock_pc_instance = MagicMock()
+        MockPinecone.return_value = mock_pc_instance
+
+        mock_index = MagicMock()
+        mock_pc_instance.Index.return_value = mock_index
+
+        mock_index.query.return_value = {
+            'matches': [
+                {
+                    'id': 'doc1',
+                    'score': 0.9,
+                    'metadata': {
+                        'text': 'This is a test document',
+                        'source': 'test'
+                    }
+                }
+            ]
+        }
+
+        embedder = MockEmbedder()
+        store = PineconeVectorStore(index_name="test_index", embedder=embedder, api_key="dummy_key")
+
+        results = store.search("test query", top_k=1)
+
+    assert len(results) == 1
+    assert results[0]['text'] == 'This is a test document'
+    assert results[0]['metadata'] == {'source': 'test'}
+    assert results[0]['score'] == 0.9
