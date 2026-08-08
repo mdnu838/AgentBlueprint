@@ -58,3 +58,38 @@ def test_pinecone_init_error():
     with pytest.raises(ValueError, match="Pinecone API key is required"):
         # Without setting PINECONE_API_KEY env var
         PineconeVectorStore(index_name="test", embedder=embedder)
+
+from unittest.mock import patch, MagicMock
+
+@patch("pinecone.Pinecone")
+def test_pinecone_vector_store(mock_pinecone_class):
+    mock_pc = MagicMock()
+    mock_pinecone_class.return_value = mock_pc
+    mock_index = MagicMock()
+    mock_pc.Index.return_value = mock_index
+
+    embedder = MockEmbedder()
+    store = PineconeVectorStore(index_name="test_index", embedder=embedder, api_key="test_key")
+
+    mock_pinecone_class.assert_called_once_with(api_key="test_key")
+    mock_pc.Index.assert_called_once_with("test_index")
+
+    with patch("uuid.uuid4", return_value="test_uuid"):
+        doc_id = store.add("Test document", metadata={"source": "test"})
+        assert doc_id == "test_uuid"
+
+        mock_index.upsert.assert_called_once_with(
+            vectors=[{"id": "test_uuid", "values": [0.1, 0.2, 0.3], "metadata": {"source": "test", "text": "Test document"}}]
+        )
+
+    mock_index.upsert.reset_mock()
+    with patch("uuid.uuid4", side_effect=["uuid1", "uuid2"]):
+        doc_ids = store.add_texts(["Doc 1", "Doc 2"], metadatas=[{"m": 1}, {"m": 2}])
+        assert doc_ids == ["uuid1", "uuid2"]
+
+        mock_index.upsert.assert_called_once_with(
+            vectors=[
+                {"id": "uuid1", "values": [0.1, 0.2, 0.3], "metadata": {"m": 1, "text": "Doc 1"}},
+                {"id": "uuid2", "values": [0.1, 0.2, 0.3], "metadata": {"m": 2, "text": "Doc 2"}}
+            ]
+        )
