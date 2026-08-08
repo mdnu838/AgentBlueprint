@@ -1,18 +1,21 @@
+import asyncio
 from datetime import timedelta
+
+from agentblueprint_config.loader import ConfigLoader
 from temporalio import activity, workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
-import asyncio
-from agentblueprint_config.loader import ConfigLoader
+
 
 @activity.defn
 async def run_workflow_activity(workflow_yaml: str, input_data: str) -> dict:
     """Activity that actually executes the AgentBlueprint workflow."""
     try:
         import uuid
+        from pathlib import Path
+
         temp_yaml_path = f"/tmp/{uuid.uuid4()}_workflow.yaml"
-        with open(temp_yaml_path, "w") as f:
-            f.write(workflow_yaml)
+        await asyncio.to_thread(Path(temp_yaml_path).write_text, workflow_yaml)
 
         loader = ConfigLoader()
         wf = loader.load_workflow(temp_yaml_path)
