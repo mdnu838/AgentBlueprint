@@ -30,6 +30,41 @@ def test_chroma_vector_store():
     assert results[0]["metadata"] == {"source": "test"}
     assert "score" in results[0]
 
+def test_chroma_vector_store_empty_texts():
+    store = ChromaVectorStore(collection_name="test_empty_collection")
+    result = store.add_texts([])
+    assert result == []
+
+def test_chroma_vector_store_batching(monkeypatch):
+    import unittest.mock
+
+    store = ChromaVectorStore(collection_name="test_batch_collection")
+
+    # Mock the client's get_max_batch_size to a small number
+    monkeypatch.setattr(store.client, 'get_max_batch_size', lambda: 2)
+
+    # Add 5 items, which should result in 3 batches (2, 2, 1)
+    texts = ["doc1", "doc2", "doc3", "doc4", "doc5"]
+    metadatas = [{"id": i} for i in range(5)]
+
+    # Spy on the collection add method
+    original_add = store.collection.add
+    spy = unittest.mock.MagicMock(side_effect=original_add)
+    monkeypatch.setattr(store.collection, 'add', spy)
+
+    result = store.add_texts(texts, metadatas=metadatas)
+
+    assert len(result) == 5
+    assert spy.call_count == 3
+
+    # Verify the first call has 2 documents
+    first_call_args = spy.call_args_list[0].kwargs
+    assert len(first_call_args["documents"]) == 2
+
+    # Verify search still works for these batched documents
+    results = store.search("doc1", top_k=5)
+    assert len(results) == 5
+
 def test_qdrant_vector_store():
     embedder = MockEmbedder()
     # Test Qdrant with in-memory client. For memory, we must create collection first.
