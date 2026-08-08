@@ -2,43 +2,43 @@
 Python REPL tool for executing code.
 """
 import sys
-from io import StringIO
+import subprocess
 from typing import Optional
 from agentblueprint_core import Tool
 
 class PythonREPLTool(Tool):
     """
     A tool for running Python code.
-    WARNING: This executes code locally and is not sandboxed. Use with caution.
+    Executes code locally in an isolated subprocess without passing environment variables.
+    WARNING: This is safer than eval/exec but not fully sandboxed. Use with caution.
     """
     name = "python_repl"
     description = "Executes Python code and returns stdout/stderr. Input should be valid python code."
     
     def run(self, code: str) -> str:
-        """Execute the python code and return the output."""
-        # Capture stdout/stderr
-        old_stdout = sys.stdout
-        old_stderr = sys.stderr
-        redirected_output = StringIO()
-        
+        """Execute the python code in a subprocess and return the output."""
         try:
-            sys.stdout = redirected_output
-            sys.stderr = redirected_output
+            result = subprocess.run(
+                [sys.executable, "-c", code],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env={}  # Clear environment to avoid leaking secrets
+            )
             
-            # Create a shared local scope for persistence if needed, 
-            # but for now we treat each run as isolated or we could use a class-level dict
-            # For simplicity: isolated
-            local_scope = {}
-            
-            exec(code, {}, local_scope)
-            
-            output = redirected_output.getvalue()
-            if not output:
+            output = result.stdout
+            if result.stderr:
+                output += "\n" + result.stderr if output else result.stderr
+
+            if not output.strip() and result.returncode == 0:
                 return "Code executed successfully (no output)."
-            return output
+
+            if result.returncode != 0:
+                return f"Error (Exit Code {result.returncode}):\n{output.strip()}"
+
+            return output.strip()
             
+        except subprocess.TimeoutExpired:
+            return "Error: Execution timed out after 10 seconds."
         except Exception as e:
             return f"Error: {str(e)}"
-        finally:
-            sys.stdout = old_stdout
-            sys.stderr = old_stderr
