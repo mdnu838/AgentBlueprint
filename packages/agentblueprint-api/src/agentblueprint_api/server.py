@@ -9,12 +9,13 @@ from agentblueprint_api.temporal_app import AgentBlueprintTemporalWorkflow
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 import threading
+import os
 
 app = FastAPI(title="AgentBlueprint API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For dev, allows all origins. Adjust for production.
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
